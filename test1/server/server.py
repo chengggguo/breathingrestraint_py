@@ -1,5 +1,7 @@
 import socket
 import sys
+import random
+from time import sleep
 
 # Create a TCP/IP Server
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,8 +21,15 @@ while True:
 	#print sys.stderr, 'received %s bytes from %s' % (len(data),address)
 	print sys.stderr, data
 
+
+	x = random.randint(0,10)
+	print x
+
 	if data:
-		sock.sendto(data, address)
-		n = n + 1
+
+		if x >5:
+
+			sock.sendto(data, address)
+			n = n + 1
 
 		#print n
