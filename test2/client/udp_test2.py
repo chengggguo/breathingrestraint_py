@@ -1,6 +1,9 @@
 import socket 
 from time import sleep
 from timeout import timeout
+import RPi.GPIO as  GPIO
+
+GPIO.setmode(GPIO.BCM)
  
 #This the remote IP address to send the data too
 HOST = 'localhost'          
@@ -11,6 +14,7 @@ PORT = 10002
 
 capacity = 300
 packetState = []
+runingState = 'udp'
 udpState = 'received'
 
 # Create the socket and connect to the remote server.
@@ -21,6 +25,17 @@ s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind(('', 10001))
 
 
+pinState = 4
+pinInhale = 23
+
+ledState = 26
+ledInhale = 13
+
+#relaies for controlling valves
+GPIO.setup(pinState,GPIO.OUT)  #breathing state
+GPIO.setup(pinInhale,GPIO.OUT) #relay for lost packets
+GPIO.setup(ledState, GPIO.OUT)
+GPIO.setup(ledInhale,GPIO.OUT)
 
 
 #init to reset all data and settings
@@ -54,6 +69,19 @@ def recvPackets():
 		print packetState[index], data
 
 
+def valveInhaling():
+        for i in range(capacity):
+                if packetState[i] == True:
+                        GPIO.output(pinInhale,True)
+			GPIO.output(ledInhale,True)
+			print packetState[i]
+                        sleep(0.05)
+                else:
+                        GPIO.output(pinInhale,False)
+			GPIO.output(ledInhale,False)
+			print packetState[i]
+                        sleep(0.05)
+	runningState = 'lisening'
  
 
 def main():
@@ -73,18 +101,25 @@ if __name__ == "__main__":
 	while True:
 		if udpState == 'received':
 			sendPackets()
-			print udpState ,'def main()'
-
-		elif udpState == 'sent':		
+			
+		elif udpState == 'sent':
 			try:
 				recvPackets()
-				print 'got'
+				
 
 			except:
-				udpState = 'roundDone'
+				print 'timeout lalala'
+				udpState = 'valve'
+				
 
-		elif udpState == 'roundDone':
-			print 'listening'
+		elif udpState == 'valve':
+			valveInhaling()
+			udpState = 'standby'
+
+		else:
+			sleep(5)
+			udpState = 'received'
+			print 'lisening'
 
 
 
