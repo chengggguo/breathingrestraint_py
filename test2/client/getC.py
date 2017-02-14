@@ -20,12 +20,6 @@ HOST = 'localhost'
 #This is the port the remove server is listening on
 PORT = 10002
 
-#number of packets,will be replaced by data from sensor
-
-capacity = 0
-packetState = []
-udpState = 'received'
-
 # Create the socket and connect to the remote server.
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -81,6 +75,11 @@ duration = 0
 tStart = 0
 tEnd =0
 init = True # should start from inhale
+capacity = 0
+packetState = []
+udpState = 'standby'
+
+
 
 #init to reset all data and settings
 def init():
@@ -94,8 +93,8 @@ def sendPackets():
                         message = str(i)
                         # Send data to the server.
                         s.sendto(message, (HOST, PORT))
-#        global udpState
-#        udpState = 'sent'
+        global udpState
+        udpState = 'sent'
         print udpState,'def sendPackets()'
         while True:
                 data, addr = s.recvfrom(60000)
@@ -105,7 +104,7 @@ def sendPackets():
                 print packetState[index], data
 
 
-def recvPackets():
+def recvPackets():#could be deleted later
         while True:
                 data, addr = s.recvfrom(60000)
                 #print "get" , data
@@ -125,78 +124,103 @@ def valveInhaling():
                         GPIO.output(ledInhale,False)
                         print packetState[i]
                         sleep(0.05)
+	global udpState, init, stateCheck, state
         state = 'standby'
 	stateCheck = True
-#	udpState = 'received'
-#	init = False
+	udpState = 'ready'
+	print 'valve play done'
+	sleep(3)
+	init = False
 
+def checkState():
+	global state
+	global stateCheck
+	global tStart
+	value = mcp.read_adc_difference(0)
+	if value > 700:
+                state = 'blow'
+		stateCheck = False
+		print 'stateCheck >650' ,value
+	elif value < 600:
+                state = 'inhale'
+                stateCheck = False
+                print 'stateCheck <600', value
+                maxV = value
+                tStart = time.time()
+	else:
+                state = 'standby'
+                print 'listening',value
+                               
 
 if __name__ == "__main__":
 	while True:
 		value = mcp.read_adc_difference(0)
 		#sleep(0.1)
+
+		#checking the breathing state
 		if stateCheck:
-        		#print value
-        		if value > 650:
-                		state = 'blow'
-                		stateCheck = False
-                		print 'stateCheck >650' ,value
-        		elif value < 600:
-                		state = 'inhale'
-                		stateCheck = False
-                		print 'stateCheck <600', value
-
-                		maxV = value
-                		#global tStart
-                		tStart = time.time() 
-			else:
-				state = 'standby'
-	                	print 'listening',value
-	
+			checkState()
+        		
+		#main state machine	
 		if state == 'inhale':
-			print value 
-
-			if init:
-				print 'inhaling'
-				sleep(0.05)
-                                if maxV > value:
-                                        maxV = value
-                                if value > 600:
-                                        print 'inhale end '
-                                        #global tEnd
-                                        tEnd = time.time()
-                                        duration = tEnd - tStart
-					global capacity
-                                        capacity = int(duration * maxV)
-                                        print 'capacity' , capacity
-                                        udpState = 'received'
-                                        sleep(1)
-                                        stateCheck = True
-					init = False
-					for i in range(capacity):
-				                packetState.append(True)
-
-
+			print value ,'inhaling', udpState
+			if udpState == 'ready':
+				checkState()
 			else:
-				valveInhaling()
-				print 'udpstate = valve'
+				if init:
+					print 'inhaling'
+					sleep(0.05)
+                        	        if maxV < value:
+                                	        maxV = value
+						print 'get maxspeed: ', maxV
+	                                if value > 600:
+        	                                print 'inhale end'
+						global tEnd
+                	                        tEnd = time.time()
+						global duration
+                        	                duration = tEnd - tStart
+						global capacity
+						print 'maxspeed: ', maxV,'started at: ', tStart, 'ended at: ', tEnd, 'duration: ' , duration
+	                                        sleep(1)
+						capacity = int(duration * maxV)
+	                                        print 'capacity' , capacity
+						sleep(1)###################### delet later
+                	                        stateCheck = True
+						if capacity <100:
+							pass
+						else:
+							init = False
+							for i in range(capacity):
+				               			 packetState.append(True)
+							udpState = 'ready'
+
+
+				else:####################################play anpther false list, need to be checked
+					valveInhaling()
 
 			
 		elif state == 'blow':
 			print 'blow',value
-			if init:
-				if value < 650:
-					stateCheck = True
+			if udpState == 'sent':
 				
-			else:
-				try:
-					sendPackets()
-				except:
+				if value <700:
 					stateCheck = True
-					print 'recvtimeoooooooooooout'
+			else:
+				if init:
+					if value < 700:
+						stateCheck = True
+				
+				else:
+					try:
+						sendPackets()
+					except:
+						print 'recvtimeoooooooooooout'
+						checkState()
+						
 
 		elif state == 'standby':
-			pass		
+			print 'listening'
+			sleep(0.005)		
 
 
 
