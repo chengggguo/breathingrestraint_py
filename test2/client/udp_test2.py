@@ -15,7 +15,7 @@ mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
 GPIO.setmode(GPIO.BCM)
  
 #This the remote IP address to send the data too
-HOST = 'localhost'          
+HOST = '192.168.0.145'          
 #This is the port the remove server is listening on
 PORT = 10002               
 

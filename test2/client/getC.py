@@ -16,7 +16,7 @@ mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
 GPIO.setmode(GPIO.BCM)
 
 #This the remote IP address to send the data too
-HOST = 'localhost'
+HOST = '192.168.0.145'
 #This is the port the remove server is listening on
 PORT = 10002
 
@@ -27,20 +27,22 @@ s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 #accepts any IP address
 s.bind(('', 10001))
 
-
+#relay
 pinState = 4
 pinInhale = 23
 
+#led
 ledState = 26
 ledInhale = 13
 
 #relaies for controlling valves
-GPIO.setup(pinState,GPIO.OUT)  #breathing state
+GPIO.setup(pinState,GPIO.OUT)  #relay for breathing state
 GPIO.setup(pinInhale,GPIO.OUT) #relay for lost packets
 GPIO.setup(ledState, GPIO.OUT)
 GPIO.setup(ledInhale,GPIO.OUT)
 
 
+# timer for inhaling duration
 class TimeCount:
     def __init__(self):
         self.start_time = 0
@@ -69,7 +71,8 @@ class TimeCount:
 timer = TimeCount()
 state = 'defalut'
 stateCheck = True
-maxV = 0
+inhaled = False # can not continuously inhale
+maxV = 0  #sensor , max airflow strenth
 capacity = 0
 duration = 0
 tStart = 0
@@ -78,14 +81,17 @@ init = True # should start from inhale
 capacity = 0
 packetState = []
 udpState = 'standby'
+unit = 600 #inhaling unit, will use it to divide the total capacity, it controls the inhaling length/running time
+unitRounds = 0 #number of inhaling rounds per one data flow 
+unitCounter = 0 
 
-
+n = 0
 
 #init to reset all data and settings
 def init():
 	pass
 
-@timeout(2)
+@timeout(3) # 3seconds timer
 def sendPackets():
         for i in range(capacity):
                 if packetState[i] == True:
@@ -95,6 +101,10 @@ def sendPackets():
                         s.sendto(message, (HOST, PORT))
         global udpState
         udpState = 'sent'
+	global unitCounter
+	global n
+	unitCounter = 0
+	n = 0
         print udpState,'def sendPackets()'
         while True:
                 data, addr = s.recvfrom(60000)
@@ -113,33 +123,43 @@ def recvPackets():#could be deleted later
                 print packetState[index], data
 
 def valveInhaling():
-        for i in range(capacity):
-                if packetState[i] == True:
+	global n
+	global unitCounter
+	global inhaled
+        for i in range(unit):
+		print 'valving'###################################################################
+                if packetState[unitCounter*unit+i] == True:
                         GPIO.output(pinInhale,True)
                         GPIO.output(ledInhale,True)
-                        print packetState[i]
+                        print packetState[unitCounter*unit+i], n
                         sleep(0.05)
                 else:
                         GPIO.output(pinInhale,False)
                         GPIO.output(ledInhale,False)
-                        print packetState[i]
+                        print packetState[unitCounter*unit+i], n
                         sleep(0.05)
+		n=n+1
+	unitCounter = unitCounter+1
 	global udpState, init, stateCheck, state
         state = 'standby'
 	stateCheck = True
-	udpState = 'ready'
-	print 'valve play done'
+	if (unitCounter+1) > unitRounds:
+		udpState = 'ready'
+	print 'valve play done',n,'.' ,unitCounter,'round done'
 	sleep(3)
 	init = False
+	inhaled = True
 
 def checkState():
 	global state
 	global stateCheck
 	global tStart
+	global inhaled
 	value = mcp.read_adc_difference(0)
-	if value > 700:
+	if value > 800:
                 state = 'blow'
 		stateCheck = False
+		inhaled = False
 		print 'stateCheck >650' ,value
 	elif value < 600:
                 state = 'inhale'
@@ -150,6 +170,7 @@ def checkState():
 	else:
                 state = 'standby'
                 print 'listening',value
+		stateCheck = True
                                
 
 if __name__ == "__main__":
@@ -164,7 +185,7 @@ if __name__ == "__main__":
 		#main state machine	
 		if state == 'inhale':
 			print value ,'inhaling', udpState
-			if udpState == 'ready':
+			if inhaled:
 				checkState()
 			else:
 				if init:
@@ -181,10 +202,14 @@ if __name__ == "__main__":
                         	                duration = tEnd - tStart
 						global capacity
 						print 'maxspeed: ', maxV,'started at: ', tStart, 'ended at: ', tEnd, 'duration: ' , duration
-	                                        sleep(1)
+	                                        sleep(1)###############################################
 						capacity = int(duration * maxV)
 	                                        print 'capacity' , capacity
 						sleep(1)###################### delet later
+						global unitRounds
+						unitRounds = capacity/unit
+						print 'will inhale', unitRounds, 'rounds'
+						sleep(5) ################################# will be deleted
                 	                        stateCheck = True
 						if capacity <100:
 							pass
@@ -193,9 +218,11 @@ if __name__ == "__main__":
 							for i in range(capacity):
 				               			 packetState.append(True)
 							udpState = 'ready'
+						global inhaled
+						inhaled = True
 
 
-				else:####################################play anpther false list, need to be checked
+				else:
 					valveInhaling()
 
 			
@@ -207,7 +234,7 @@ if __name__ == "__main__":
 					stateCheck = True
 			else:
 				if init:
-					if value < 700:
+					if value < 800:
 						stateCheck = True
 				
 				else:
@@ -219,8 +246,7 @@ if __name__ == "__main__":
 						
 
 		elif state == 'standby':
-			print 'listening'
-			sleep(0.005)		
+			pass
 
 
 
