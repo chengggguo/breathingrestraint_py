@@ -5,7 +5,10 @@ import time
 
 ser = serial.Serial("/dev/ttyACM1",9600)
 time.sleep(2) # it needs a delay for the serial connection
-num='123456'
+fh=open("number.txt","r")
+num = fh.readline()
+print num
+time.sleep(1)
 
 def sendNumLed():
 	reversedNum = num[::-1] #reverse the string of number

@@ -44,7 +44,7 @@ GPIO.setup(ledInhale,GPIO.OUT)
 
 ser = serial.Serial("/dev/ttyACM1",9600) #serial communication between Pi and arduino
 time.sleep(2) # it needs a delay for the serial connection
-num='123456'##########################################################
+num=
 
 def sendNumLed(): #function that send the number to led
 	reversedNum = num[::-1] #reverse the string of number
