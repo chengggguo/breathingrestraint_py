@@ -1,8 +1,9 @@
 import time
-from time import sleep
+import serial
+import struct
 
 import socket
-from timeout import timeout #timer
+from timeout import timeout #a DIY timer
 import RPi.GPIO as  GPIO
 
 import Adafruit_GPIO.SPI as SPI
@@ -40,6 +41,19 @@ GPIO.setup(pinState,GPIO.OUT)  #relay for breathing state
 GPIO.setup(pinInhale,GPIO.OUT) #relay for lost packets
 GPIO.setup(ledState, GPIO.OUT)
 GPIO.setup(ledInhale,GPIO.OUT)
+
+ser = serial.Serial("/dev/ttyACM1",9600) #serial communication between Pi and arduino
+time.sleep(2) # it needs a delay for the serial connection
+num='123456'##########################################################
+
+def sendNumLed(): #function that send the number to led
+	reversedNum = num[::-1] #reverse the string of number
+	if 16-len(reversedNum) > 0:
+		for i in range(16-len(reversedNum)):
+			reversedNum = reversedNum + '0'
+	for i in range(len(reversedNum)): # send digits to the led one by one
+		ser.write(struct.pack('>B',int(reversedNum[i])))
+
 
 
 # timer for inhaling duration
