@@ -1,14 +1,31 @@
 import serial
 import struct
 import time
+from timeout import timeout
+import threading
 
+try:
+	ser = serial.Serial("/dev/ttyACM0",9600)
+	time.sleep(2) # it needs a delay for the serial connection
+except:
+	ser = serial.Serial("/dev/ttyACM1",9600)
+	time.sleep(2)
 
-ser = serial.Serial("/dev/ttyACM1",9600)
-time.sleep(2) # it needs a delay for the serial connection
 fh=open("number.txt","r")
 num = fh.readline()
+fh.close() 
 print num
+#num = '1356'
 time.sleep(1)
+
+
+def init():
+	fh = open("number.txt","w")
+        fh.truncate()
+        fh.write(num)
+        fh.close()
+	
+t = threading.Timer(3.0,init)
 
 def sendNumLed():
 	reversedNum = num[::-1] #reverse the string of number
@@ -19,6 +36,9 @@ def sendNumLed():
 		ser.write(struct.pack('>B',int(reversedNum[i])))
 
 
-while True:
-	sendNumLed()
-	time.sleep(1)
+if  True:
+	t.start()
+	while True:
+		sendNumLed()
+		num=str(int(num)+1)
+		time.sleep(1)

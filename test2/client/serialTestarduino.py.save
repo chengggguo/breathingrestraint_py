@@ -1,0 +1,9 @@
+import serial
+import struct
+import time
+
+
+ser = serial.Serial("/dev/ttyACM1",9600)
+
+num=5
+ser.write(struct.pack('>B',num))
