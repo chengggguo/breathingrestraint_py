@@ -252,7 +252,7 @@ if __name__ == "__main__":
 				if timerstarted == False:
 					t.start()
 					global timerstarted
-					timerstarted = False
+					timerstarted = True
 			else:
 				if init:
 					print 'inhaling'
