@@ -1,8 +1,7 @@
 import time
-from time import sleep
 import serial
 import struct
-import threading
+from time import sleep
 
 import socket
 from timeout import timeout #a DIY timer
@@ -102,7 +101,6 @@ unit = 300 #inhaling unit, will use it to divide the total capacity, it controls
 unitRounds = 0 #number of inhaling rounds per one data flow 
 unitCounter = 0 
 
-timerstarted = False ## reset timer
 
 resetTimerstart = 0
 resetTimerend = 0
@@ -118,8 +116,6 @@ def reset():
         f.write(str(strCapacity))
         f.close()
 	print 'saved'
-#	global timerstarted
-#	timerstarted = False
 	resetTimerstart=0
 	sleep(5)
 
@@ -148,13 +144,6 @@ def sendPackets():
                 print packetState[index], data
 
 
-def recvPackets():#could be deleted later
-        while True:
-                data, addr = s.recvfrom(60000)
-                #print "get" , data
-                index = int(data)
-                packetState[index] = True
-                print packetState[index], data
 
 def valveInhaling():
 	global n
@@ -201,10 +190,6 @@ def checkState():
 		inhaled = False
 		print 'stateCheck >650' ,value
 		GPIO.output(pinState,True)
-#		if timerstarted:
-#			t.cancel()
-#			global timerstarted
-#			timerstarted = False
 
 	elif value < 700:
                 state = 'inhale'
@@ -213,22 +198,12 @@ def checkState():
                 maxV = value
                 tStart = time.time()
 		GPIO.output(pinState,False)
-#		if timerstarted:
-#			t.cancel()
-#			global timerstarted
-#			timerstarted = False
 		
 	else:
                 state = 'standby'
                 print 'listening',value
 		stateCheck = True
 		GPIO.output(pinState,True)
-#		try:
-#			t.start()
-#			print 'reset timer started'
-#			sleep(2)
-#		except:
-#			pass
                                
 def sendNumLed(): #function that send the number to led
         reversedNum =str(strCapacity)[::-1] #reverse the string of number
@@ -256,10 +231,6 @@ if __name__ == "__main__":
 				checkState()
 				global resetTimerstart
 				resetTimerstart = time.time()
-#				if timerstarted == False:
-#					t.start()
-#					global timerstarted
-#					timerstarted = True
 			else:
 				if init:
 					print 'inhaling'
@@ -297,13 +268,6 @@ if __name__ == "__main__":
 
 				else:
 					valveInhaling()
-#					if timerstarted == False:
-#						t.start()
-#						global timerstarted
-#						timerstarted = True
-
-#                                global resetTimerstart
-#                                resetTimerstart = time.time()
 
 
 			
@@ -312,10 +276,7 @@ if __name__ == "__main__":
 			if udpState == 'sent':
 				
 				if value <700:
-#					if timerstarted ==False:
-#						t.start()
-#						global timerstarted
-#						timerstarted = True
+
 					stateCheck = True
 				else:
 					pass
@@ -323,10 +284,7 @@ if __name__ == "__main__":
 			else:
 				if init:
 					if value < 800:
-#						if timerstarted == False:
-#							t.start()
-#							global timerstarted
-#							timerstarted = True
+
 						stateCheck = True
 				
 				else:
@@ -336,21 +294,14 @@ if __name__ == "__main__":
 						print 'recvtimeoooooooooooout'
 						time.sleep(2)
 						stateCheck = True
-#						checkState()
+
                         global resetTimerstart
                         resetTimerstart = time.time()
 
 						
 
 		elif state == 'standby':
-#			if timerstarted:
-#				pass
-#			else:
-#				t.start()
-#				print 'reset timer started'
-#				sleep(2)
-#				global timerstarted
-#				timerstarted = True
+
 
 			if resetTimerstart > 0:
 				global resetTimerend
