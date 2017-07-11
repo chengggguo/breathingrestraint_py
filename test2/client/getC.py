@@ -110,14 +110,44 @@ n = 0
 
 #init to reset all data and settings
 def reset():
+	if inhaled:
+		if init == False:
 
-        f = open("number.txt","w")
-        f.truncate()
-        f.write(str(strCapacity))
-        f.close()
-	print 'saved'
-	resetTimerstart=0
-	sleep(5)
+		        f = open("number.txt","w")
+       			f.truncate()
+		        f.write(str(strCapacity))
+		        f.close()
+	print 'saved'	
+	state = 'defalut'
+	stateCheck = True
+	inhaled = False # can not continuously inhale
+	maxV = 0  #sensor , max airflow strenth
+	capacity = 0 #raw number get from sensor
+	strCapacity = ''
+	lostCounter = 0 #counting the lost packets of each round
+	duration = 0
+	tStart = 0
+	tEnd =0
+	init = True # should start from inhale
+	capacity = 0
+	packetState = []
+	udpState = 'standby'
+	unitRounds = 0 #number of inhaling rounds per one data flow 
+	unitCounter = 0
+
+
+	resetTimerstart = 0
+	resetTimerend = 0
+	resetTimer = 0
+
+	n=0
+
+	fh=open("number.txt","r") #load the number from a txt file
+	num = fh.readline()
+	print num
+	fh.close()
+	print 'reset done'
+	sleep(2)
 
 
 @timeout(3) # 3seconds timer
@@ -184,7 +214,7 @@ def checkState():
 	global tStart
 	global inhaled
 	value = mcp.read_adc_difference(0)
-	if value > 800:
+	if value > 900:
                 state = 'blow'
 		stateCheck = False
 		inhaled = False
@@ -213,7 +243,9 @@ def sendNumLed(): #function that send the number to led
         for i in range(len(reversedNum)): # send digits to the led one by one
                 ser.write(struct.pack('>B',int(reversedNum[i])))
 
-#t = threading.Timer(5.0,init)
+strCapacity = num
+sendNumLed()
+sleep(2)
 
 if __name__ == "__main__":
 	while True:
@@ -275,7 +307,7 @@ if __name__ == "__main__":
 			print 'blow',value
 			if udpState == 'sent':
 				
-				if value <700:
+				if value <900:
 
 					stateCheck = True
 				else:
@@ -283,7 +315,7 @@ if __name__ == "__main__":
 
 			else:
 				if init:
-					if value < 800:
+					if value < 900:
 
 						stateCheck = True
 				
