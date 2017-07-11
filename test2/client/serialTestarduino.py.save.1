@@ -3,20 +3,20 @@ import struct
 import time
 
 try:
-	ser = serial.Serial("/dev/ttyACM1",9600)
+	ser = serial.Serial("/dev/ttyACM0",9600)
 	time.sleep(2) # it needs a delay for the serial connection
 except:
-	ser = serial.Serial("/dev/ttyACM0",9600)
-        time.sleep(2) # it needs a delay for the serial connection
-
+	ser = serial.Serial("/dev/ttyACM1",9600)
+	time.sleep(2)
 
 fh=open("number.txt","r")
 num = fh.readline()
 print num
+#num = '1356'
 time.sleep(1)
 
 def sendNumLed():
-	reversedNum = num[::-1] #reverse the string of number
+	reversedNum = num[::-1] #reverse the string of nu mber
 	if 16-len(reversedNum) > 0:
 		for i in range(16-len(reversedNum)):
 			reversedNum = reversedNum + '0'
@@ -26,5 +26,5 @@ def sendNumLed():
 
 while True:
 	sendNumLed()
-	num=str(int(num)+1)
-	time.sleep(1)
+	
+	num=num+1
