@@ -167,8 +167,19 @@ def reset():
 	num = fh.readline()
 	print num
 	fh.close()
+	
+	for i in range(10):
+		GPIO.output(ledInhale,True)
+		GPIO.output(ledState,True)
+		sleep(0.5)
+		GPIO.output(ledInhale,False)
+		GPIO.output(ledState,False)
+		sleep(0.5)
+
+	sleep(0.5)
+	GPIO.output(ledState,True)
 	print 'reset done'
-	sleep(2)
+	sleep(1)
 
 
 @timeout(3) # 3seconds timer
@@ -228,6 +239,11 @@ def valveInhaling():
 	sleep(3)
 	init = False
 	inhaled = True
+	GPIO.output(ledState,False)
+	global resetTimerstart
+	resetTimerstart = time.time()
+	
+	GPIO.output(ledInhale,False)
 
 def checkState():
 	global state
@@ -270,6 +286,8 @@ def sendNumLed(): #function that send the number to led
 strCapacity = num
 sendNumLed()
 sleep(2)
+GPIO.output(ledState,True)
+GPIO.output(ledInhale,False)
 
 if __name__ == "__main__":
 	while True:
@@ -284,7 +302,7 @@ if __name__ == "__main__":
 		if state == 'inhale':
 			print value ,'inhaling', udpState
 
-			sleep(1)
+#			sleep(1)
 			if inhaled:
 				checkState()
 				global resetTimerstart
@@ -322,6 +340,8 @@ if __name__ == "__main__":
 							udpState = 'ready'
 						global inhaled
 						inhaled = True
+						global resetTimerstart
+						resetTimerstart= time.time()
 
 
 				else:
@@ -336,6 +356,7 @@ if __name__ == "__main__":
 				if value <900:
 
 					stateCheck = True
+					GPIO.output(ledState,True)
 				else:
 					global resetTimerstart
 					resetTimerstart = time.time()
@@ -346,6 +367,7 @@ if __name__ == "__main__":
 					if value < 900:
 
 						stateCheck = True
+						GPIO.output(ledState,True)
 				
 				else:
 					try:
@@ -354,6 +376,7 @@ if __name__ == "__main__":
 						print 'recvtimeoooooooooooout'
 						time.sleep(2)
 						stateCheck = True
+						GPIO.output(ledState,True)
 
                         global resetTimerstart
                         resetTimerstart = time.time()
