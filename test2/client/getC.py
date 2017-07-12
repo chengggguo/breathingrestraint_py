@@ -20,7 +20,8 @@ mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
 GPIO.setmode(GPIO.BCM)
 
 #This the remote IP address to send the data too
-HOST = '192.168.0.145'
+#HOST = '192.168.0.145'
+HOST = 'localhost'
 #This is the port the remove server is listening on
 PORT = 10002
 
@@ -182,7 +183,7 @@ def reset():
 	sleep(1)
 
 
-@timeout(3) # 3seconds timer
+@timeout(5) # 3seconds timer
 def sendPackets():
 	print 'sendpacket function'
         for i in range(capacity):
@@ -191,6 +192,7 @@ def sendPackets():
                         message = str(i)
                         # Send data to the server.
                         s.sendto(message, (HOST, PORT))
+			print "sent", i
         global udpState
         udpState = 'sent'
 	global unitCounter
@@ -199,7 +201,7 @@ def sendPackets():
 	n = 0
         print udpState,'def sendPackets()'
         while True:
-                data, addr = s.recvfrom(60000)
+                data, addr = s.recvfrom(4096)
                 #print "get" , data
                 index = int(data)
                 packetState[index] = True
