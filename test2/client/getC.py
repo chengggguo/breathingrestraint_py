@@ -10,6 +10,8 @@ import RPi.GPIO as  GPIO
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 
+GPIO.setwarnings(False)
+
 #for sensor via mcp3008
 SPI_PORT   = 0
 SPI_DEVICE = 0
@@ -335,7 +337,9 @@ if __name__ == "__main__":
 
 					stateCheck = True
 				else:
-					pass
+					global resetTimerstart
+					resetTimerstart = time.time()
+					
 
 			else:
 				if init:
