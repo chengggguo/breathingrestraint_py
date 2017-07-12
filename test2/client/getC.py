@@ -171,10 +171,10 @@ def reset():
 	for i in range(10):
 		GPIO.output(ledInhale,True)
 		GPIO.output(ledState,True)
-		sleep(0.5)
+		sleep(0.2)
 		GPIO.output(ledInhale,False)
 		GPIO.output(ledState,False)
-		sleep(0.5)
+		sleep(0.2)
 
 	sleep(0.5)
 	GPIO.output(ledState,True)
@@ -258,6 +258,7 @@ def checkState():
 		inhaled = False
 		print 'stateCheck >900' ,value
 		GPIO.output(pinState,True)
+		GPIO.output(ledState,False)
 
 	elif value < 700:
                 state = 'inhale'
