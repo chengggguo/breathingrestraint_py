@@ -94,7 +94,6 @@ duration = 0
 tStart = 0
 tEnd =0
 init = True # should start from inhale
-capacity = 0
 packetState = []
 udpState = 'standby'
 unit = 300 #inhaling unit, will use it to divide the total capacity, it controls the inhaling length/running time
@@ -110,8 +109,28 @@ n = 0
 
 #init to reset all data and settings
 def reset():
+	global inhaled
+	global init
+	global state
+	global stateCheck
+	global maxV
+	global capacity
+	global strCapacity
+	global lostCounter
+	global duration
+	global tStart
+	global tEnd
+	global packetState
+	global udpState
+	global unitRounds
+	global unitCounter
+	global resetTimerstart
+	global resetTimerend
+	global resetTimer
+	global n
+
 	if inhaled:
-		if init == False:
+		if int(strCapacity) > 0:
 
 		        f = open("number.txt","w")
        			f.truncate()
@@ -216,15 +235,17 @@ def checkState():
 	value = mcp.read_adc_difference(0)
 	if value > 900:
                 state = 'blow'
+		global stateCheck
 		stateCheck = False
 		inhaled = False
-		print 'stateCheck >650' ,value
+		print 'stateCheck >900' ,value
 		GPIO.output(pinState,True)
 
 	elif value < 700:
                 state = 'inhale'
+		global stateCheck
                 stateCheck = False
-                print 'stateCheck <600', value
+                print 'stateCheck <700', value
                 maxV = value
                 tStart = time.time()
 		GPIO.output(pinState,False)
@@ -232,6 +253,7 @@ def checkState():
 	else:
                 state = 'standby'
                 print 'listening',value
+		global stateCheck
 		stateCheck = True
 		GPIO.output(pinState,True)
                                
@@ -259,6 +281,8 @@ if __name__ == "__main__":
 		#main state machine	
 		if state == 'inhale':
 			print value ,'inhaling', udpState
+
+			sleep(1)
 			if inhaled:
 				checkState()
 				global resetTimerstart
@@ -342,7 +366,7 @@ if __name__ == "__main__":
 				resetTimer = resetTimerend - resetTimerstart
 				print resetTimer
 			
-				if resetTimer > 5:
+				if resetTimer > 10:
 					reset()
 			
 		
